@@ -1,6 +1,7 @@
 package com.example.mobilebip
 
 import android.os.Bundle
+import android.Manifest
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,6 +20,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,8 +36,13 @@ import androidx.compose.ui.unit.dp
 import com.example.mobilebip.model.Op
 import com.example.mobilebip.model.hasResource
 import com.example.mobilebip.ui.theme.MobileBipTheme
-
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
+@ExperimentalPermissionsApi
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -50,32 +57,45 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
+@ExperimentalPermissionsApi
 @Composable
 fun Body() {
-    val context = LocalContext.current
-    var resource by remember { mutableStateOf("") }
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .padding(horizontal = Dp(2.0f), vertical = Dp(2.0f))
-            .fillMaxSize()
-        ) {
-        TextField(
-            value = resource,
-            onValueChange = {
-                if (hasResource(resource) == 1){
-                    resource = it
-                } else {
-                    Toast.makeText(context, "Recurso não encontrado", Toast.LENGTH_LONG).show()
-                } },
-            shape = MaterialTheme.shapes.large,
-            label = { Text(text = "Recurso") }
-        )
-        TableWidget()
-    }
+    val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
+    if (cameraPermissionState.status.isGranted) {
+        CameraScreen()
+    }
+    else if (cameraPermissionState.status.shouldShowRationale) {
+        Text("Permissão de câmera negada.")
+    }
+    else {
+        SideEffect {
+            cameraPermissionState.run { launchPermissionRequest() }
+        }
+        Text("Sem permissão de câmera.")
+    }
+//    val context = LocalContext.current
+//    var resource by remember { mutableStateOf("") }
+//    Column(
+//        verticalArrangement = Arrangement.Center,
+//        horizontalAlignment = Alignment.CenterHorizontally,
+//        modifier = Modifier
+//            .padding(horizontal = Dp(2.0f), vertical = Dp(2.0f))
+//            .fillMaxSize()
+//        ) {
+//        TextField(
+//            value = resource,
+//            onValueChange = {
+//                if (hasResource(resource) == 1) {
+//                    resource = it
+//                } else {
+//                    Toast.makeText(context, "Recurso não encontrado", Toast.LENGTH_LONG).show()
+//                } },
+//            shape = MaterialTheme.shapes.large,
+//            label = { Text(text = "Recurso") }
+//        )
+//        TableWidget()
+//    }
 }
 
 @Composable
@@ -126,7 +146,7 @@ fun RowScope.TableCell(value : String, weight : Float) {
             .padding(8.dp)
     )
 }
-
+@ExperimentalPermissionsApi
 @Preview
 @Composable
 fun BodyPreview() {
